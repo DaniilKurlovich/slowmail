@@ -7,8 +7,8 @@ import typing as t
 class UserBase(BaseModel):
     email: str
     is_active: bool = True
-    first_name: str = None
-    last_name: str = None
+    first_name: str
+    last_name: str
 
 
 class UserOut(UserBase):
@@ -48,11 +48,14 @@ class TokenData(BaseModel):
 
 class Message(BaseModel):
     id: int
+    chat_id: int         # идентификатор в каком диалоге находится
     from_name: str       # кто написал это сообщение
     to_name: str         # кому написали это сообщение
+    to_addr_id: str      # id кому написали
     letter: str
     data: datetime
     mark_as_read: bool
+    is_your_message: bool
 
 
 class ConversationDialog(BaseModel):
@@ -64,3 +67,15 @@ class ResponseLetter(BaseModel):
     status: bool
     delay: int
     chat_id: int
+
+
+class Friend(BaseModel):
+    id: int
+    full_name: str
+    category: t.List[str]
+
+
+class UserFriend(Friend):
+    friends: t.List[str]
+    friendship_in: t.List[int]
+    friendship_out: t.List[int]

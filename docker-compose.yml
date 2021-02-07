@@ -13,6 +13,8 @@ services:
   redis:
     image: redis
     container_name: redis
+    networks:
+      - webnet
     ports:
       - 6379:6379
 
@@ -26,18 +28,23 @@ services:
       - '5432:5432'
     volumes:
       - db-data:/var/lib/postgresql/data:cached
-#  :TODO общий env между postgres и worker
+    networks:
+      - webnet
+
   worker:
     build:
-      context: .
-      dockerfile: CeleryDockFile
+      context: backend
+      dockerfile: Dockerfile
     environment:
+      PYTHONPATH: .
       REDIS_HOST: redis
       REDIS_PORT: 6379
       DATABASE_URL: 'postgresql://slowmail:slowmail@postgres:5432/slowmail'
-    command: celery -A app.core.celery_app worker --loglevel=DEBUG
     depends_on:
-      - "redis"
+      - redis
+    command: celery --app=app.tasks worker --loglevel=DEBUG -Q main-queue -c 1
+    networks:
+      - webnet
 
   backend:
     build:
@@ -56,9 +63,27 @@ services:
       REDIS_PORT: 6379
       DATABASE_URL: 'postgresql://slowmail:slowmail@postgres:5432/slowmail'
     depends_on:
+      - "mongo_service"
       - "worker"
       - "postgres"
       - "redis"
+    networks:
+      - webnet
+
+  mongo_service:
+    image: mongo
+    container_name: mongo_storage
+    environment:
+      MONGO_INITDB_DATABASE: mongo_slowmail
+      MONGO_INITDB_ROOT_USERNAME: slowmail
+      MONGO_INITDB_ROOT_PASSWORD: slowmail
+    ports:
+      - '27017-27019:27017-27019'
+    networks:
+      - webnet
 
 volumes:
   db-data:
+
+networks:
+  webnet:

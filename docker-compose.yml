@@ -1,23 +1,6 @@
 version: '3.7'
 
 services:
-#  nginx:
-#    image: nginx:1.17
-#    volumes:
-#      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-#    ports:
-#      - 8000:80
-#    depends_on:
-#      - backend
-
-  redis:
-    image: redis
-    container_name: redis
-    networks:
-      - webnet
-    ports:
-      - 6379:6379
-
   postgres:
     image: postgres
     restart: always
@@ -28,21 +11,6 @@ services:
       - '5432:5432'
     volumes:
       - db-data:/var/lib/postgresql/data:cached
-    networks:
-      - webnet
-
-  worker:
-    build:
-      context: backend
-      dockerfile: Dockerfile
-    environment:
-      PYTHONPATH: .
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      DATABASE_URL: 'postgresql://slowmail:slowmail@postgres:5432/slowmail'
-    depends_on:
-      - redis
-    command: celery --app=app.tasks worker --loglevel=DEBUG -Q main-queue -c 1
     networks:
       - webnet
 
@@ -64,9 +32,7 @@ services:
       DATABASE_URL: 'postgresql://slowmail:slowmail@postgres:5432/slowmail'
     depends_on:
       - "mongo_service"
-      - "worker"
       - "postgres"
-      - "redis"
     networks:
       - webnet
 

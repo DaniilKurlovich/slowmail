@@ -8,11 +8,10 @@ from app.core.security import get_password_hash
 
 
 def get_chat_id(db: Session, from_id: int, to_id: int):
-    # :TODO создать индекс по двум полям REFACTOR!!
-    chat = db.query(models.ConversationDialog).filter(models.ConversationDialog.from_id == from_id
-                                                      and models.ConversationDialog.to_id == to_id
-                                                      or models.ConversationDialog.from_id == to_id
-                                                      and models.ConversationDialog.to_id == from_id).all()
+    chat = db.query(models.ConversationDialog).filter(or_(and_(models.ConversationDialog.from_id == from_id,
+                                                               models.ConversationDialog.to_id == to_id),
+                                                          and_(models.ConversationDialog.from_id == to_id,
+                                                               models.ConversationDialog.to_id == from_id))).all()
     if not chat:
         chat = models.ConversationDialog(from_id=from_id, to_id=to_id)
         db.add(chat)
@@ -28,22 +27,24 @@ def mark_as_read_letter(db: Session, id_letter: int):
     letter.as_read = True
     db.add(letter)
     db.commit()
+    return letter
 
 
 JOIN_QUERY = lambda db: db.query(models.MailBox, models.ConversationDialog.chat_id).join(
     models.ConversationDialog, or_(models.MailBox.to_addr == models.ConversationDialog.to_id,
-                               models.MailBox.from_addr == models.ConversationDialog.to_id))
+                                   models.MailBox.from_addr == models.ConversationDialog.to_id))
 
 
 # :TODO лучше создать VIEW и не делать select каждый раз
 def get_sorted_messages(db: Session, from_addr: int, to_addr: t.Optional[int]):
     if to_addr is not None:
         return JOIN_QUERY(db).filter(or_(and_(models.MailBox.from_addr == from_addr,
-                                     models.MailBox.to_addr == to_addr),
-                                     and_(models.MailBox.from_addr == to_addr,
-                                     models.MailBox.to_addr == from_addr))).order_by(models.MailBox.received.desc()).all()
+                                              models.MailBox.to_addr == to_addr),
+                                         and_(models.MailBox.from_addr == to_addr,
+                                              models.MailBox.to_addr == from_addr))).order_by(
+            models.MailBox.received.desc()).all()
     else:
-        return JOIN_QUERY(db).filter(or_(models.MailBox.to_addr == from_addr, models.MailBox.from_addr == from_addr))\
+        return JOIN_QUERY(db).filter(or_(models.MailBox.to_addr == from_addr, models.MailBox.from_addr == from_addr)) \
             .order_by(models.MailBox.received.desc(), models.MailBox.to_addr.desc()).all()
 
 
@@ -76,14 +77,14 @@ def save_letter_for_user(db: Session, letter_content: str, id_user: int, from_ad
     letter = models.MailBox(to_addr=from_addr, from_addr=id_user, message=letter_content)
     db.add(letter)
     db.commit()
-    return letter.id
+    return letter
 
 
 def store_to_letter_queue(db: Session, letter_content: str, from_addr: int, to_addr: int, delay: int):
     letter = models.ComingMessages(from_addr=from_addr, to_addr=to_addr, message=letter_content, delay=delay)
     db.add(letter)
     db.commit()
-    return letter.id
+    return letter
 
 
 def create_user(db: Session, user: schemas.UserCreate):

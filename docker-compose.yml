@@ -36,6 +36,17 @@ services:
     networks:
       - webnet
 
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    command: npm start
+    tty: true
+    ports:
+      - '3000:3000'
+    networks:
+      - webnet
+
   mongo_service:
     image: mongo
     container_name: mongo_storage

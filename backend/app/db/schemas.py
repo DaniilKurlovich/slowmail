@@ -48,6 +48,7 @@ class TokenData(BaseModel):
 
 class Message(BaseModel):
     id: int
+    from_id: t.Optional[int]
     chat_id: int         # идентификатор в каком диалоге находится
     from_name: str       # кто написал это сообщение
     to_name: str         # кому написали это сообщение

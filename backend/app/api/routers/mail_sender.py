@@ -60,7 +60,7 @@ async def notify_about_new_msg(letter, from_id, to_id, content, chat_id, db):
 
     from_user = get_user(db, from_id)
     to_user = get_user(db, to_id)
-    msg = Message(id=letter.id, from_name=f'{from_user.first_name} {from_user.last_name}',
+    msg = Message(id=letter.id, from_name=f'{from_user.first_name} {from_user.last_name}', from_id=from_id,
                   to_name=f'{to_user.first_name} {to_user.last_name}',
                   letter=content, data=letter.received,
                   mark_as_read=letter.as_read, is_your_message=False, chat_id=chat_id, to_addr_id=to_id)
@@ -82,7 +82,7 @@ async def send_mail(to_addr: int, content: str, delay: int = 5,
 
 
 @r.websocket('/notification')
-async def notification_message(websocket: WebSocket, db=Depends(get_db)):
+async def notification_message(websocket: WebSocket):
     await websocket.accept()
     to_id = None
     try:

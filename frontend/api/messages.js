@@ -14,7 +14,7 @@ export const sendMessage = ({ token, to_addr, content, delay }) =>
   });
 
 export const markAsRead = ({ token, id_letter }) =>
-  axios.post(`${URL}/markAsRead`, {
+  axios.post(`${URL}/markAsRead`, null, {
     params: { id_letter },
     headers: { authorization: token },
   });

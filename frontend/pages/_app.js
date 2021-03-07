@@ -26,10 +26,12 @@ function MyApp({ Component, pageProps, pathname }) {
 
   async function load() {
     let localAuthorized = false;
+    let localId = undefined;
 
     try {
       const { data: info } = await getMyInfo(cookies.token);
       setMyId(info.id);
+      localId = info.id;
 
       setAuthorized(true);
       localAuthorized = true;
@@ -43,6 +45,12 @@ function MyApp({ Component, pageProps, pathname }) {
     if (!localAuthorized) {
       return;
     }
+
+    let socket = new WebSocket('ws://localhost:8888/notification');
+
+    socket.onopen = function (e) {
+      socket.send(JSON.stringify({ from_id: localId }));
+    };
 
     let {
       data: { friends },
@@ -63,7 +71,7 @@ function MyApp({ Component, pageProps, pathname }) {
             ...message,
             text: message.letter,
             readed: message.mark_as_read,
-            my: message.is_your_message
+            my: message.is_your_message,
           })),
         };
       })

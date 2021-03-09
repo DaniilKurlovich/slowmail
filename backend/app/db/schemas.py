@@ -68,7 +68,7 @@ class ResponseLetter(BaseModel):
     status: bool
     delay: int
     chat_id: int
-
+    id: int
 
 class Friend(BaseModel):
     id: int

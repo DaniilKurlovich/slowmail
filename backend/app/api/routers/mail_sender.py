@@ -78,7 +78,7 @@ async def send_mail(to_addr: int, content: str, delay: int = 5,
     letter = save_letter_for_user(db, content, id_from, to_addr)
     chat_id = get_chat_id(db, id_from, to_addr)
     await notify_about_new_msg(letter, id_from, to_addr, content, chat_id, db)
-    return {'status': True, 'delay': delay, 'chat_id': chat_id}
+    return {'status': True, 'delay': delay, 'chat_id': chat_id, 'id': letter.id}
 
 
 @r.websocket('/notification')

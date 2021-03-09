@@ -40,7 +40,7 @@ List[Message]:
 async def mark_letter_as_read(id_letter: int, db=Depends(get_db)) -> dict:
     try:
         letter = mark_as_read_letter(db, id_letter)
-        await notify_about_marker_read_letter(letter.to_addr, id_letter)
+        await notify_about_marker_read_letter(letter.from_addr, id_letter)
     except Exception as exc:
         return {'status': 'error', 'reason': str(exc)}
     return {'status': 'ok'}

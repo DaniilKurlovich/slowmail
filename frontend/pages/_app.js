@@ -15,7 +15,7 @@ import axios from 'axios';
 
 function MyApp({ Component, pageProps, pathname }) {
   const [cookies, setCookie] = useCookies(['token']);
-  const { setMyId, myId, setChats, authorized, setAuthorized } = MessagesStore;
+  const { setMyId, myId, setChats, authorized, setAuthorized, addMessage } = MessagesStore;
   const router = useRouter();
 
   useEffect(() => {
@@ -46,17 +46,11 @@ function MyApp({ Component, pageProps, pathname }) {
       return;
     }
 
-    let socket = new WebSocket('ws://localhost:8888/notification');
-
-    socket.onopen = function (e) {
-      socket.send(JSON.stringify({ from_id: localId }));
-    };
-
     let {
       data: { friends },
     } = await myFriends({ token: cookies.token });
 
-    console.log(friends);
+    // console.log(friends);
 
     const chats = await Promise.all(
       friends.map(async (item, index) => {
@@ -78,6 +72,36 @@ function MyApp({ Component, pageProps, pathname }) {
     );
 
     setChats(chats);
+
+    let socket = new WebSocket('ws://localhost:8888/notification');
+
+    socket.onopen = function (e) {
+      socket.send(JSON.stringify({ from_id: localId }));
+    };
+
+    socket.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+
+      if (data.type === 'message') {
+        const info = JSON.parse(data.data);
+        const { from_id } = info;
+
+        for (let i = 0; i < chats.length; i++) {
+          if (chats[i].friend.id === from_id) {
+            addMessage(i, {
+              ...info,
+              text: info.letter,
+              readed: info.mark_as_read,
+              my: info.is_your_message,
+            });
+
+            break;
+          }
+        }
+
+        console.log();
+      }
+    };
   }
 
   useEffect(() => {

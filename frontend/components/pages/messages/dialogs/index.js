@@ -60,6 +60,7 @@ const Dialogs = () => {
       content: messageText,
     });
     addMessage(currentChat, { my: true, readed: false, text: messageText });
+    setMessageText('');
   };
 
   return (

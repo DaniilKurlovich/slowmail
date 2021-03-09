@@ -4,3 +4,6 @@ class UserDontFound(Exception):
     """
     pass
 
+
+class HandshakeSendedAlready(Exception):
+    pass

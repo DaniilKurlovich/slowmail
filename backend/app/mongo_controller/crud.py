@@ -3,6 +3,7 @@ import typing as ty
 from app.db.schemas import UserFriend, Friend
 from .controller import insert_document, find_similar, update_document_push, find_document, update_document_pull, \
     update_document_set
+from ..errors import HandshakeSendedAlready
 
 
 def get_user_by_id(user_id: int):
@@ -47,6 +48,9 @@ def add_friend(user_id: int, friend: Friend):
 
 def handshake_friends(from_id: int, possible_friend: dict):
     from_user = get_user_by_id(from_id)
+    for friend in from_user['friendship_out']:
+        if friend['id'] == possible_friend['id']:
+            raise HandshakeSendedAlready()
     for key in ['_id', 'friends', 'friendship_in', 'friendship_out']:
         from_user.pop(key, None)
         possible_friend.pop(key, None)

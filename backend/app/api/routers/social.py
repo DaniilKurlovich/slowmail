@@ -7,6 +7,7 @@ from app.core.auth import get_current_user
 from app.mongo_controller.crud import (recommend_friends_for_user_id, handshake_friends, get_user_by_id,
                                        add_friend, accept_handshake, add_category)
 
+from app.errors import HandshakeSendedAlready
 
 social = r = APIRouter()
 
@@ -45,7 +46,10 @@ async def request_to_friend(to_user_id: int, user=Depends(get_current_user)):
     request_user = get_user_by_id(to_user_id)
     if request_user is None:
         raise HTTPException(404, 'to_user_id not found')
-    handshake_friends(user.id, request_user)
+    try:
+        handshake_friends(user.id, request_user)
+    except HandshakeSendedAlready:
+        return HTTPException(400, 'handshake already sended')
     return {'status': 'ok'}
 
 

@@ -37,6 +37,7 @@ def accept_handshake(from_user_id: int, to_user_id: int):
     # очистить запрос
     update_document_pull({'id': from_user_id}, {'friendship_in': {'id': to_user_id}})
     update_document_pull({'id': to_user_id}, {'friendship_out': {'id': from_user_id}})
+    return from_user, to_user
 
 
 def add_friend(user_id: int, friend: Friend):

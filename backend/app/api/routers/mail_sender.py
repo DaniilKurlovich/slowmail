@@ -11,9 +11,11 @@ from app.db.crud import (store_to_letter_queue,
                          get_user, mark_as_read_letter,
                          get_chat_id, get_message_from_id,
                          save_letter_for_user)
-from app.db.schemas import ConversationDialog, Message, ResponseLetter
+from app.db.schemas import ConversationDialog, Message, ResponseLetter, Friend
 
 from app.db.crud import save_letter_for_user
+
+from app.mongo_controller.crud import accept_handshake
 
 mail_routers = r = APIRouter()
 WS_POOL_CONNECTS = {}
@@ -47,24 +49,25 @@ async def mark_letter_as_read(id_letter: int, db=Depends(get_db)) -> dict:
 
 
 async def notify_about_marker_read_letter(to_addr: int, id_letter: int):
-    ws_conn = WS_POOL_CONNECTS.get(to_addr, None)
-    if ws_conn is None:
-        return
-    await ws_conn.send_text(json.dumps({'type': 'mark_read', 'data': {'id': id_letter}}))
+    ws_conn, lock = WS_POOL_CONNECTS.get(to_addr, (None, None))
+    with lock:
+        if ws_conn is None:
+            return
+        await ws_conn.send_text(json.dumps({'type': 'mark_read', 'data': {'id': id_letter}}))
 
 
 async def notify_about_new_msg(letter, from_id, to_id, content, chat_id, db):
-    ws_conn = WS_POOL_CONNECTS.get(to_id, None)
+    ws_conn, lock = WS_POOL_CONNECTS.get(to_id, (None, None))
     if ws_conn is None:
         return
-
-    from_user = get_user(db, from_id)
-    to_user = get_user(db, to_id)
-    msg = Message(id=letter.id, from_name=f'{from_user.first_name} {from_user.last_name}', from_id=from_id,
-                  to_name=f'{to_user.first_name} {to_user.last_name}',
-                  letter=content, data=letter.received,
-                  mark_as_read=letter.as_read, is_your_message=False, chat_id=chat_id, to_addr_id=to_id)
-    await ws_conn.send_text(json.dumps({'type': 'message', 'data': msg.json()}))
+    with lock:
+        from_user = get_user(db, from_id)
+        to_user = get_user(db, to_id)
+        msg = Message(id=letter.id, from_name=f'{from_user.first_name} {from_user.last_name}', from_id=from_id,
+                      to_name=f'{to_user.first_name} {to_user.last_name}',
+                      letter=content, data=letter.received,
+                      mark_as_read=letter.as_read, is_your_message=False, chat_id=chat_id, to_addr_id=to_id)
+        await ws_conn.send_text(json.dumps({'type': 'message', 'data': msg.json()}))
 
 
 @r.post('/sendMessage', response_model=ResponseLetter)
@@ -81,6 +84,26 @@ async def send_mail(to_addr: int, content: str, delay: int = 5,
     return {'status': True, 'delay': delay, 'chat_id': chat_id, 'id': letter.id}
 
 
+async def notify_about_new_friend(friends: List[dict]):
+    assert len(friends) == 2
+    a, b = friends
+
+    conn_a, lock_a = WS_POOL_CONNECTS.get(a['id'])
+    conn_b, lock_b = WS_POOL_CONNECTS.get(b['id'])
+
+    async with lock_a, lock_b:
+        f_a = conn_a.send_text(json.dumps({'type': 'new_friend', 'data': Friend(**a).json()}))
+        f_b = conn_b.send_text(json.dumps({'type': 'new_friend', 'data': Friend(**b).json()}))
+        await asyncio.gather(f_a, f_b)
+
+
+@r.post('/acceptHandshake')
+async def accept_to_friend(user_id: int, user=Depends(get_current_user)):
+    friends = accept_handshake(user.id, user_id)
+    await notify_about_new_friend(friends)
+    return {'status': 'ok'}
+
+
 @r.websocket('/notification')
 async def notification_message(websocket: WebSocket):
     await websocket.accept()
@@ -89,6 +112,6 @@ async def notification_message(websocket: WebSocket):
         while True:
             data = await websocket.receive_json()
             to_id = data['from_id']
-            WS_POOL_CONNECTS[to_id] = websocket
+            WS_POOL_CONNECTS[to_id] = (websocket, asyncio.Lock())
     finally:
         WS_POOL_CONNECTS.pop(to_id)

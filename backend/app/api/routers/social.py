@@ -53,12 +53,6 @@ async def request_to_friend(to_user_id: int, user=Depends(get_current_user)):
     return {'status': 'ok'}
 
 
-@r.post('/acceptHandshake')
-async def accept_to_friend(user_id: int, user=Depends(get_current_user)):
-    accept_handshake(user.id, user_id)
-    return {'status': 'ok'}
-
-
 @r.get('/myFriends')
 async def get_friends(user=Depends(get_current_user)):
     user_db = get_user_by_id(user.id)

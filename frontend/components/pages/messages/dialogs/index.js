@@ -15,12 +15,21 @@ import MessagesStore from '../../../../mobx/messagesStore';
 import { observer } from 'mobx-react';
 import { sendMessage } from '../../../../api/messages';
 import { useCookies } from 'react-cookie';
-import { toJS } from 'mobx';
+import { toJS, autorun } from 'mobx';
 import { markAsRead } from './../../../../api/messages';
 
 const Dialogs = () => {
   const chatRef = createRef();
   const { addMessage, markReaded, chats } = MessagesStore;
+
+  const [currentChatCount, setCurrentChatCount] = useState(undefined);
+
+  autorun(() => {
+    if (currentChat !== undefined && chats[currentChat].messages.length !== currentChatCount) {
+      setCurrentChatCount(chats[currentChat].messages.length);
+      console.log(chats[currentChat].messages.length);
+    }
+  });
 
   const [cookies] = useCookies(['token']);
   const [currentChat, setCurrentChat] = useState(undefined);
@@ -37,6 +46,7 @@ const Dialogs = () => {
     if (currentChat === undefined) {
       return;
     }
+    console.log('called');
 
     for (let i = 0; i < chats[currentChat].messages.length; i++) {
       const { readed, my } = chats[currentChat].messages[i];
@@ -46,20 +56,23 @@ const Dialogs = () => {
         markAsRead({ token: cookies.token, id_letter: chats[currentChat].messages[i].id });
       }
     }
-  }, [currentChat]);
+  }, [currentChat, currentChatCount]);
 
-  const sendMessageHandler = () => {
+  const sendMessageHandler = async () => {
     if (currentChat === undefined || chats[currentChat]?.friend?.id === undefined) {
       return;
     }
 
     console.log(chats[currentChat]?.friend?.id);
-    sendMessage({
+    const { data } = await sendMessage({
       token: cookies.token,
       to_addr: chats[currentChat]?.friend?.id,
       content: messageText,
     });
-    addMessage(currentChat, { my: true, readed: false, text: messageText });
+
+    const { id } = data;
+
+    addMessage(currentChat, { my: true, readed: false, text: messageText, id });
     setMessageText('');
   };
 

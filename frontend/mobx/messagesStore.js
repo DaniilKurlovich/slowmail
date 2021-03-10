@@ -44,6 +44,18 @@ class Messages {
     this.chats[chatIndex].messages[messageIndex].readed = true;
   };
 
+  @action markReadedById = (id) => {
+    for (let i = 0; i < this.chats.length; i++) {
+      for (let j = 0; j < this.chats[i].messages.length; j++) {
+        if (this.chats[i].messages[j].id === id) {
+          this.chats[i].messages[j].readed = true;
+
+          break;
+        }
+      }
+    }
+  };
+
   @action addMessage = (chatIndex, message) => {
     this.chats[chatIndex].messages.unshift(message);
   };

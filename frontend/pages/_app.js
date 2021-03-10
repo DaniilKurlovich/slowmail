@@ -15,7 +15,15 @@ import axios from 'axios';
 
 function MyApp({ Component, pageProps, pathname }) {
   const [cookies, setCookie] = useCookies(['token']);
-  const { setMyId, myId, setChats, authorized, setAuthorized, addMessage } = MessagesStore;
+  const {
+    setMyId,
+    myId,
+    setChats,
+    authorized,
+    setAuthorized,
+    addMessage,
+    markReadedById,
+  } = MessagesStore;
   const router = useRouter();
 
   useEffect(() => {
@@ -39,6 +47,11 @@ function MyApp({ Component, pageProps, pathname }) {
       setAuthorized(false);
       if (err?.response?.status === 401) {
         console.log('Тут эта нада заканчивать');
+
+        const { pathname } = router;
+        if (pathname !== '/') {
+          Router.push('/');
+        }
       }
     }
 
@@ -100,6 +113,13 @@ function MyApp({ Component, pageProps, pathname }) {
         }
 
         console.log();
+      } else if (data.type === 'mark_read') {
+        const { id } = data.data;
+
+        console.log('mark_read', id);
+        console.log(chats);
+
+        markReadedById(id);
       }
     };
   }

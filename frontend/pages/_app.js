@@ -23,6 +23,7 @@ function MyApp({ Component, pageProps, pathname }) {
     setAuthorized,
     addMessage,
     markReadedById,
+    addChat,
   } = MessagesStore;
   const router = useRouter();
 
@@ -111,15 +112,14 @@ function MyApp({ Component, pageProps, pathname }) {
             break;
           }
         }
-
-        console.log();
       } else if (data.type === 'mark_read') {
         const { id } = data.data;
 
-        console.log('mark_read', id);
-        console.log(chats);
-
         markReadedById(id);
+      } else if (data.type === 'new_friend') {
+        const friend = JSON.parse(data.data);
+
+        addChat(friend);
       }
     };
   }

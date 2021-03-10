@@ -44,6 +44,13 @@ class Messages {
     this.chats[chatIndex].messages[messageIndex].readed = true;
   };
 
+  @action addChat = (friend) => {
+    this.chats.push({
+      friend,
+      messages: [],
+    });
+  };
+
   @action markReadedById = (id) => {
     for (let i = 0; i < this.chats.length; i++) {
       for (let j = 0; j < this.chats[i].messages.length; j++) {

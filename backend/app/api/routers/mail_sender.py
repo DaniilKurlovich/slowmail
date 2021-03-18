@@ -50,7 +50,7 @@ async def mark_letter_as_read(id_letter: int, db=Depends(get_db)) -> dict:
 
 async def notify_about_marker_read_letter(to_addr: int, id_letter: int):
     ws_conn, lock = WS_POOL_CONNECTS.get(to_addr, (None, None))
-    with lock:
+    async with lock:
         if ws_conn is None:
             return
         await ws_conn.send_text(json.dumps({'type': 'mark_read', 'data': {'id': id_letter}}))
@@ -60,7 +60,7 @@ async def notify_about_new_msg(letter, from_id, to_id, content, chat_id, db):
     ws_conn, lock = WS_POOL_CONNECTS.get(to_id, (None, None))
     if ws_conn is None:
         return
-    with lock:
+    async with lock:
         from_user = get_user(db, from_id)
         to_user = get_user(db, to_id)
         msg = Message(id=letter.id, from_name=f'{from_user.first_name} {from_user.last_name}', from_id=from_id,
@@ -92,8 +92,8 @@ async def notify_about_new_friend(friends: List[dict]):
     conn_b, lock_b = WS_POOL_CONNECTS.get(b['id'])
 
     async with lock_a, lock_b:
-        f_a = conn_a.send_text(json.dumps({'type': 'new_friend', 'data': Friend(**a).json()}))
-        f_b = conn_b.send_text(json.dumps({'type': 'new_friend', 'data': Friend(**b).json()}))
+        f_a = conn_a.send_text(json.dumps({'type': 'new_friend', 'data': Friend(**b).json()}))
+        f_b = conn_b.send_text(json.dumps({'type': 'new_friend', 'data': Friend(**a).json()}))
         await asyncio.gather(f_a, f_b)
 
 

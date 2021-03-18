@@ -14,7 +14,7 @@ social = r = APIRouter()
 
 @r.get('/categories')
 async def get_categories():
-    return ['movie', 'science', 'music', 'Putin', 'science', 'Jesus', 'parkour', 'LGBT']
+    return ['movie', 'science', 'music']
 
 
 @r.post('/setCategories')

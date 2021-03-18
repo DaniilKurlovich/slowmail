@@ -18,7 +18,7 @@ function MyApp({ Component, pageProps, pathname }) {
     setChats,
     authorized,
     setAuthorized,
-    addMessage,
+    addMessageByFriendId,
     markReadedById,
     addChat,
   } = MessagesStore;
@@ -93,18 +93,12 @@ function MyApp({ Component, pageProps, pathname }) {
         const info = JSON.parse(data.data);
         const { from_id } = info;
 
-        for (let i = 0; i < chats.length; i++) {
-          if (chats[i].friend.id === from_id) {
-            addMessage(i, {
-              ...info,
-              text: info.letter,
-              readed: info.mark_as_read,
-              my: info.is_your_message,
-            });
-
-            break;
-          }
-        }
+        addMessageByFriendId(from_id, {
+          ...info,
+          text: info.letter,
+          readed: info.mark_as_read,
+          my: info.is_your_message,
+        });
       } else if (data.type === 'mark_read') {
         const { id } = data.data;
 

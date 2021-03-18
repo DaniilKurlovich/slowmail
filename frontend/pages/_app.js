@@ -9,15 +9,12 @@ import { useCookies } from 'react-cookie';
 import MessagesStore from '../mobx/messagesStore';
 import { observer } from 'mobx-react';
 import { getMessages, sendMessage } from '../api/messages';
-import messages from './messages';
 import { useRouter } from 'next/router';
-import axios from 'axios';
 
 function MyApp({ Component, pageProps, pathname }) {
-  const [cookies, setCookie] = useCookies(['token']);
+  const [cookies] = useCookies(['token']);
   const {
     setMyId,
-    myId,
     setChats,
     authorized,
     setAuthorized,
@@ -47,8 +44,6 @@ function MyApp({ Component, pageProps, pathname }) {
     } catch (err) {
       setAuthorized(false);
       if (err?.response?.status === 401) {
-        console.log('Тут эта нада заканчивать');
-
         const { pathname } = router;
         if (pathname !== '/') {
           Router.push('/');
@@ -63,8 +58,6 @@ function MyApp({ Component, pageProps, pathname }) {
     let {
       data: { friends },
     } = await myFriends({ token: cookies.token });
-
-    // console.log(friends);
 
     const chats = await Promise.all(
       friends.map(async (item, index) => {

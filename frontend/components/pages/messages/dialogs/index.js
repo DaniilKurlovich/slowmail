@@ -15,7 +15,7 @@ import MessagesStore from '../../../../mobx/messagesStore';
 import { observer } from 'mobx-react';
 import { sendMessage } from '../../../../api/messages';
 import { useCookies } from 'react-cookie';
-import { toJS, autorun } from 'mobx';
+import { autorun } from 'mobx';
 import { markAsRead } from './../../../../api/messages';
 
 const Dialogs = () => {
@@ -27,7 +27,6 @@ const Dialogs = () => {
   autorun(() => {
     if (currentChat !== undefined && chats[currentChat].messages.length !== currentChatCount) {
       setCurrentChatCount(chats[currentChat].messages.length);
-      console.log(chats[currentChat].messages.length);
     }
   });
 
@@ -46,7 +45,6 @@ const Dialogs = () => {
     if (currentChat === undefined) {
       return;
     }
-    console.log('called');
 
     for (let i = 0; i < chats[currentChat].messages.length; i++) {
       const { readed, my } = chats[currentChat].messages[i];
@@ -63,7 +61,6 @@ const Dialogs = () => {
       return;
     }
 
-    console.log(chats[currentChat]?.friend?.id);
     const { data } = await sendMessage({
       token: cookies.token,
       to_addr: chats[currentChat]?.friend?.id,

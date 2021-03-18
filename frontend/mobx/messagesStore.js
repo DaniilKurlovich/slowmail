@@ -7,7 +7,6 @@ class Messages {
 
   @observable myId = -1;
   @observable authorized = undefined;
-  @observable messages = [];
   @observable chats = [];
 
   @computed get count() {
@@ -34,10 +33,6 @@ class Messages {
 
   @action setAuthorized = (authorized) => {
     this.authorized = authorized;
-  };
-
-  @action save = (messages) => {
-    this.messages = messages;
   };
 
   @action markReaded = (chatIndex, messageIndex) => {
@@ -69,10 +64,6 @@ class Messages {
 
   @action setChats = (chats) => {
     this.chats = chats;
-  };
-
-  @action clear = () => {
-    this.messages = [];
   };
 }
 

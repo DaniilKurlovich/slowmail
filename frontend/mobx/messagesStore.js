@@ -65,7 +65,7 @@ class Messages {
   @action addMessageByFriendId = (friendId, message) => {
     for (let i = 0; i < this.chats.length; i++) {
       if (this.chats[i].friend.id === friendId) {
-        this.chats[chatIndex].messages.unshift(message);
+        this.chats[i].messages.unshift(message);
 
         break;
       }
